@@ -11,17 +11,17 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by mx on 16/11/9.
  */
 @WebServlet(name = "ImageReceiverServlet")
 public class ImageReceiverServlet extends HttpServlet {
+    private static final String DEFAULT_PATH = "/image";
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         this.doPost(request, response);
@@ -30,7 +30,16 @@ public class ImageReceiverServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String re = "-1";
 
-        String path = request.getSession().getServletContext().getRealPath("/images");
+        String path = getStorePath(request);
+        if (null == path || path.equals("")) {
+            path = request.getSession().getServletContext().getRealPath(DEFAULT_PATH);
+        } else {
+            File f = new File(path);
+            if (!f.exists()) {
+                path = request.getSession().getServletContext().getRealPath(DEFAULT_PATH);
+            }
+        }
+
         List piclist = new ArrayList();  //放上传的图片名
 
         DiskFileItemFactory factory = new DiskFileItemFactory();
@@ -81,5 +90,24 @@ public class ImageReceiverServlet extends HttpServlet {
         }
 
         return jsonArray.toString();
+    }
+
+    private String getStorePath(HttpServletRequest request) {
+        Properties pro = new Properties();
+        //String realpath = request.getRealPath("/WEB-INF/classes");
+        String fileName = request.getSession().getServletContext().getRealPath("") + "config.properties";
+        try {
+            //读取配置文件
+            //InputStream in = request.getSession().getServletContext().getResourceAsStream(fileName);
+            //BufferedReader bf = new BufferedReader(new InputStreamReader(in));
+            FileInputStream in = new FileInputStream(fileName);
+            pro.load(in);
+        } catch (FileNotFoundException e) {
+            System.out.println(e);
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+
+        return pro.getProperty("path");
     }
 }
