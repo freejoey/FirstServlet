@@ -12,9 +12,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 /**
  * Created by mx on 16/11/9.
@@ -22,6 +25,8 @@ import java.util.Properties;
 @WebServlet(name = "ImageReceiverServlet")
 public class ImageReceiverServlet extends HttpServlet {
     private static final String DEFAULT_PATH = "/image";
+    //window非法文件名
+    private static Pattern FilePattern = Pattern.compile("[\\\\/:*?\"<>|]");
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         this.doPost(request, response);
@@ -31,6 +36,7 @@ public class ImageReceiverServlet extends HttpServlet {
         String re = "-1";
 
         String path = getStorePath(request);
+
         if (null == path || path.equals("")) {
             path = request.getSession().getServletContext().getRealPath(DEFAULT_PATH);
         } else {
@@ -39,6 +45,8 @@ public class ImageReceiverServlet extends HttpServlet {
                 path = request.getSession().getServletContext().getRealPath(DEFAULT_PATH);
             }
         }
+
+        System.out.println("图片保存目录：" + path);
 
         List piclist = new ArrayList();  //放上传的图片名
 
@@ -56,8 +64,10 @@ public class ImageReceiverServlet extends HttpServlet {
                     System.out.println("表单值为：" + fi.getString());
                 } else {
                     // 是文件
-                    String fn = fi.getName();
-                    System.out.println("文件名是：" + fn);  //文件名
+                    //String fn = filenameFilter(fi.getName());
+                    String fn = getNameByTime(fi.getName());
+
+                    System.out.println("新文件名是：" + fn);  //文件名
                     // fn 是可能是这样的 c:\abc\de\tt\fish.jpg
                     fi.write(new File(path, fn));
 
@@ -109,5 +119,27 @@ public class ImageReceiverServlet extends HttpServlet {
         }
 
         return pro.getProperty("path");
+    }
+
+    private static String filenameFilter(String str) {
+        String re = str == null ? null : FilePattern.matcher(str).replaceAll("");
+        if (null != re) {
+            int lastPoint = re.lastIndexOf(".");
+            String beforePoint = re.substring(0, lastPoint);
+            beforePoint = beforePoint.replace(".", "");
+            re = beforePoint + str.substring(lastPoint, str.length());
+        }
+        return re;
+    }
+
+    private String getNameByTime(String fullName) {
+        String name = "p-";
+        String tail = fullName.substring(fullName.lastIndexOf("."), fullName.length());
+
+        Date now = new Date();
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        name += fmt.format(now);
+        name = name + tail;
+        return name;
     }
 }

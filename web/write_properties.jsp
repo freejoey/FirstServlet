@@ -8,6 +8,9 @@
     request.setCharacterEncoding("utf-8");
     String txtMsg = request.getParameter("test2");
     if (null != txtMsg && !txtMsg.equals("")) {
+        //统一windows路径符号
+        txtMsg = txtMsg.replace("\\", "/");
+
         //覆盖properties文件以前内容
         File f = new File(fileName);
         if (!f.exists()) {
