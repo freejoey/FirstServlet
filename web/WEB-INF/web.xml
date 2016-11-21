@@ -22,4 +22,10 @@
         <servlet-name>ImageReceiveServlet</servlet-name>
         <url-pattern>/uploadImage</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ServerRun</servlet-name>
+        <servlet-class>servlet.BroadcastServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
 </web-app>
