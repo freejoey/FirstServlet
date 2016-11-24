@@ -42,8 +42,8 @@ public class BroadcastServlet extends HttpServlet {
         }
 
         timer = new Timer(true);
-        //timer.schedule(new SenderTask(), 0, 1000 * 5);
-        timer.schedule(new SenderAllTask(), 0, 1000 * 5);
+        timer.schedule(new SenderTask(), 0, 1000 * 5);
+        //timer.schedule(new SenderAllTask(), 0, 1000 * 5);
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

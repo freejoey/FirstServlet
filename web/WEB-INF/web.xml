@@ -13,7 +13,6 @@
         <url-pattern>/demo</url-pattern>
     </servlet-mapping>
 
-
     <servlet>
         <servlet-name>ImageReceiveServlet</servlet-name>
         <servlet-class>servlet.ImageReceiverServlet</servlet-class>
@@ -21,6 +20,15 @@
     <servlet-mapping>
         <servlet-name>ImageReceiveServlet</servlet-name>
         <url-pattern>/uploadImage</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>GetServerImagesServlet</servlet-name>
+        <servlet-class>servlet.GetServerImagesServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GetServerImagesServlet</servlet-name>
+        <url-pattern>/imageList</url-pattern>
     </servlet-mapping>
 
     <servlet>
