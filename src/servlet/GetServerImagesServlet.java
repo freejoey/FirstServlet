@@ -1,10 +1,12 @@
 package servlet;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.InetAddress;
@@ -18,6 +20,7 @@ public class GetServerImagesServlet extends HttpServlet {
     private final String MessageName = "tag";
     private final int PAGE_SIZE = 10;
     private final static String SPLIT_TAG = "&#&#";
+    private final int IMAGE_SIZE = 256;
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         doGet(request, response);
@@ -29,8 +32,8 @@ public class GetServerImagesServlet extends HttpServlet {
         InetAddress netAddress = InetAddress.getLocalHost();
         String serverAddr = "http://"
                 + netAddress.getHostAddress()
-                + ":8080/FirstServlet"
-                + "/image/";
+                + ":8080/"
+                + "FirstServlet/thumbnail/";
 
         int sumPic = 0;
         int page = 0;
@@ -38,16 +41,64 @@ public class GetServerImagesServlet extends HttpServlet {
             page = Integer.parseInt(receive);
         }
 
-        String path = request.getRealPath("") + "/image/";
-        File ff = new File(path);
+        Properties pro = new Properties();
+        String fileName = request.getRealPath("") + "config.properties";
+        boolean existProperty = true;
+        try {
+            //读取配置文件
+            //InputStream in = request.getSession().getServletContext().getResourceAsStream(fileName);
+            //BufferedReader bf = new BufferedReader(new InputStreamReader(in));
+            FileInputStream in = new FileInputStream(fileName);
+            pro.load(in);
+        } catch (FileNotFoundException e) {
+            existProperty = false;
+            System.out.println(e);
+        } catch (IOException e) {
+            existProperty = false;
+            System.out.println(e);
+        }
+
+        String storePath = pro.getProperty("path");
+        if (null == storePath || storePath.equals("") && !existProperty) {
+            storePath = request.getRealPath("") + "/image/";
+        }
+
+        File thumbFile = new File(request.getRealPath("") + "/thumbnail/");
+        File ff = new File(storePath);
         File[] files = ff.listFiles();
         if (ff.exists() && null != files && files.length > 0) {
             sumPic = files.length;
             int end = Math.min(sumPic, PAGE_SIZE * (page + 1));
             StringBuilder sb = new StringBuilder();
-            for (int i = (page * PAGE_SIZE + 1); i < end; i++) {
-                sb.append(serverAddr + files[i].getName());
+            int count = 0;
+            for (int i = (page * PAGE_SIZE + 1); i < end && count < 10; i++) {
+                if (files[i].isDirectory()) {
+                    continue;
+                }
+                String imageName = files[i].getName();
+
+                //如果该图片的缩略图不存在,存一张缩略图
+                File imageFile = new File(thumbFile, imageName);
+                if (!(imageFile.exists())) {
+                    try {
+                        BufferedImage input = ImageIO.read(new File(storePath + imageName));
+                        BufferedImage inputbig = new BufferedImage(256, 256, BufferedImage.TYPE_INT_BGR);
+                        Graphics2D g = (Graphics2D) inputbig.getGraphics();
+                        g.drawImage(input, 0, 0, 256, 256, null); //画图
+                        g.dispose();
+                        inputbig.flush();
+
+                        String tail = imageName.substring(imageName.lastIndexOf(".") + 1);
+                        ImageIO.write(inputbig, tail, imageFile);
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
+
+                //生成图片地址
+                sb.append(serverAddr + imageName);
                 sb.append(SPLIT_TAG);
+                count++;
             }
             re = sb.toString();
         }

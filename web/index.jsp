@@ -90,7 +90,10 @@
 
 <button style='margin-top:20px' id="bt_check_image">查看图片</button>
 
-<form method="post" action="write_properties.jsp" id="passForm" target="nm_iframe">
+<%--<form method="post" action="write_properties.jsp" id="passForm" target="nm_iframe">--%>
+<%--<input id='test2' type='hidden' name="test2">--%>
+<%--</form>--%>
+<form method="post" action="write_properties.jsp" id="passForm">
     <input id='test2' type='hidden' name="test2">
 </form>
 
