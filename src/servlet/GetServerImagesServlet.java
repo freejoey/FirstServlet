@@ -1,6 +1,7 @@
 package servlet;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,7 +19,7 @@ import java.util.Properties;
 @WebServlet(name = "GetServerImagesServlet")
 public class GetServerImagesServlet extends HttpServlet {
     private final String MessageName = "tag";
-    private final int PAGE_SIZE = 10;
+    private final int PAGE_SIZE = 30;
     private final static String SPLIT_TAG = "&#&#";
     private final int IMAGE_SIZE = 256;
 
@@ -68,23 +69,24 @@ public class GetServerImagesServlet extends HttpServlet {
         File[] files = ff.listFiles();
         if (ff.exists() && null != files && files.length > 0) {
             sumPic = files.length;
-            int end = Math.min(sumPic, PAGE_SIZE * (page + 1));
             StringBuilder sb = new StringBuilder();
             int count = 0;
-            for (int i = (page * PAGE_SIZE + 1); i < end && count < 10; i++) {
-                if (files[i].isDirectory()) {
+
+            for (int i = page * PAGE_SIZE; i < sumPic && count < PAGE_SIZE; i++) {
+                if (files[i].isDirectory() || !isImage(files[i])) {
                     continue;
                 }
-                String imageName = files[i].getName();
+
+                String imageName = files[i].getName().replace(" ", "");
 
                 //如果该图片的缩略图不存在,存一张缩略图
                 File imageFile = new File(thumbFile, imageName);
                 if (!(imageFile.exists())) {
                     try {
-                        BufferedImage input = ImageIO.read(new File(storePath + imageName));
-                        BufferedImage inputbig = new BufferedImage(256, 256, BufferedImage.TYPE_INT_BGR);
+                        BufferedImage input = ImageIO.read(files[i]);
+                        BufferedImage inputbig = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_BGR);
                         Graphics2D g = (Graphics2D) inputbig.getGraphics();
-                        g.drawImage(input, 0, 0, 256, 256, null); //画图
+                        g.drawImage(input, 0, 0, IMAGE_SIZE, IMAGE_SIZE, null); //画图
                         g.dispose();
                         inputbig.flush();
 
@@ -103,6 +105,8 @@ public class GetServerImagesServlet extends HttpServlet {
             re = sb.toString();
         }
 
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("content-type", "text/html;charset=UTF-8");
         response.setContentType("text/html");
         PrintWriter pw = response.getWriter();
         pw.write(re);
@@ -110,24 +114,22 @@ public class GetServerImagesServlet extends HttpServlet {
         pw.close();
     }
 
-    /**
-     * @param im          原始图像
-     * @param resizeTimes 倍数,比如0.5就是缩小一半,0.98等等double类型
-     * @return 返回处理后的图像
-     */
-    private BufferedImage zoomImage(BufferedImage im, float resizeTimes) {
-        /*原始图像的宽度和高度*/
-        int width = im.getWidth();
-        int height = im.getHeight();
-
-        /*调整后的图片的宽度和高度*/
-        int toWidth = (int) (Float.parseFloat(String.valueOf(width)) * resizeTimes);
-        int toHeight = (int) (Float.parseFloat(String.valueOf(height)) * resizeTimes);
-
-        /*新生成结果图片*/
-        BufferedImage result = new BufferedImage(toWidth, toHeight, BufferedImage.TYPE_INT_RGB);
-
-        result.getGraphics().drawImage(im.getScaledInstance(toWidth, toHeight, java.awt.Image.SCALE_SMOOTH), 0, 0, null);
-        return result;
+    private boolean isImage(File file) {
+        boolean flag = false;
+        try {
+            ImageInputStream is = ImageIO.createImageInputStream(file);
+            if (null == is) {
+                return false;
+            }
+            String pureName = file.getName().substring(0, file.getName().lastIndexOf("."));
+            if (pureName.equals("")) {
+                return false;
+            }
+            is.close();
+            flag = true;
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return flag;
     }
 }
